@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { api } from '@/lib/api'
 import { StatusBadge, PriorityBadge } from '@/components/ui/Badge'
+import AIPanel from '@/components/AIPanel'
 import type { Ticket, Comment, TicketStatus } from '@/types'
 
 export default function TicketDetailPage() {
@@ -124,6 +125,10 @@ export default function TicketDetailPage() {
           </div>
         )}
       </div>
+
+      {canChangeStatus && token && (
+        <AIPanel ticket={ticket} token={token} />
+      )}
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">
