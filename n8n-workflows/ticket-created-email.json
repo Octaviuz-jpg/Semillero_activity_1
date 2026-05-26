@@ -1,0 +1,29 @@
+{
+  "name": "Ticket Created - Email Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/webhooks/ticket-created",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "soporte@ejemplo.com",
+        "toEmail": "={{ $json.emailTo }}",
+        "subject": "={{ $json.subject }}",
+        "text": "={{ $json.message }}"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[ { "node": "Send Email" } ]] }
+  }
+}

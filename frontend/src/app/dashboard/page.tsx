@@ -61,6 +61,16 @@ export default function DashboardPage() {
                 Nuevo Ticket
               </Link>
             )}
+            {user.role === 'admin' && (
+              <>
+                <Link href="/admin/users" className="text-sm text-gray-600 hover:text-gray-900">
+                  Usuarios
+                </Link>
+                <Link href="/admin/metrics" className="text-sm text-gray-600 hover:text-gray-900">
+                  Métricas
+                </Link>
+              </>
+            )}
             <span className="text-sm text-gray-600">
               {user.name} <span className="text-xs text-gray-400">({user.role})</span>
             </span>

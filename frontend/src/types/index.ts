@@ -36,3 +36,29 @@ export interface Category {
   description: string | null
   created_at: string
 }
+
+export interface User {
+  id: string
+  email: string
+  username: string
+  name: string
+  role: Role
+  created_at: string
+}
+
+export interface AdminMetrics {
+  tickets: {
+    total: number
+    open: number
+    inProgress: number
+    resolved: number
+    critical: number
+  }
+  users: {
+    total: number
+    agents: number
+    admins: number
+    endUsers: number
+  }
+  avgResolutionTimeHours: number
+}

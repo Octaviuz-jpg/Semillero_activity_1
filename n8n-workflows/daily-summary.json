@@ -1,0 +1,39 @@
+{
+  "name": "Daily Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [ { "field": "type", "expression": "day" } ]
+        }
+      },
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:4000/api/webhooks/daily-summary"
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "soporte@ejemplo.com",
+        "toEmail": "manager@ejemplo.com",
+        "subject": "={{ 'Resumen diario de tickets - ' + $json.date }}",
+        "text": "={{ 'Resumen del día:\n\nTotal: ' + $json.total + '\nAbiertos: ' + $json.open + '\nResueltos: ' + $json.resolved + '\nCríticos: ' + $json.critical }}"
+      },
+      "name": "Send Summary Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Schedule": { "main": [[ { "node": "HTTP Request" } ]] },
+    "HTTP Request": { "main": [[ { "node": "Send Summary Email" } ]] }
+  }
+}
