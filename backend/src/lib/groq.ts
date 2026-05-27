@@ -8,4 +8,4 @@ export const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY || '',
 })
 
-export const GROQ_MODEL = 'llama3-70b-8192'
+export const GROQ_MODEL = 'llama-3.3-70b-versatile'
