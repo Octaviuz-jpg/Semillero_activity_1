@@ -18,6 +18,7 @@ export interface Ticket {
   ai_risk_level: string | null
   created_at: string
   updated_at: string
+  users?: { name: string; email: string } | null
 }
 
 export interface Comment {

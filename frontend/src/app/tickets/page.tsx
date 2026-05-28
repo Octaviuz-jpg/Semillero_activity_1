@@ -86,15 +86,17 @@ export default function TicketsPage() {
                   <p className="mt-1 text-sm text-gray-500 line-clamp-2">
                     {ticket.description}
                   </p>
-                  <p className="mt-2 text-xs text-gray-400">
-                    {new Date(ticket.created_at).toLocaleDateString('es-MX', {
+                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+                    <span>{ticket.users?.name || 'Usuario'}</span>
+                    <span>·</span>
+                    <span>{new Date(ticket.created_at).toLocaleDateString('es-MX', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit',
-                    })}
-                  </p>
+                    })}</span>
+                  </div>
                 </div>
                 <div className="ml-4 flex items-center gap-2">
                   <StatusBadge status={ticket.status} />

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { Ticket, TicketStatus, TicketPriority } from '../types'
+import { Ticket, TicketWithUser, TicketStatus, TicketPriority } from '../types'
 
 type CreateTicketInput = {
   title: string
@@ -33,13 +33,15 @@ export async function createTicket(data: CreateTicketInput): Promise<Ticket> {
   return ticket as Ticket
 }
 
+const TICKET_SELECT = '*, users:users(name, email)'
+
 export async function getTickets(filters?: {
   status?: TicketStatus
   priority?: TicketPriority
   user_id?: string
   assigned_to?: string
-}): Promise<Ticket[]> {
-  let query = supabase.from('tickets').select('*')
+}): Promise<TicketWithUser[]> {
+  let query = supabase.from('tickets').select(TICKET_SELECT)
 
   if (filters?.status) query = query.eq('status', filters.status)
   if (filters?.priority) query = query.eq('priority', filters.priority)
@@ -50,18 +52,18 @@ export async function getTickets(filters?: {
 
   const { data, error } = await query
   if (error) throw new Error(error.message)
-  return (data as Ticket[]) || []
+  return (data as TicketWithUser[]) || []
 }
 
-export async function getTicketById(id: string): Promise<Ticket> {
+export async function getTicketById(id: string): Promise<TicketWithUser> {
   const { data, error } = await supabase
     .from('tickets')
-    .select('*')
+    .select(TICKET_SELECT)
     .eq('id', id)
     .single()
 
   if (error || !data) throw new Error('Ticket no encontrado')
-  return data as Ticket
+  return data as TicketWithUser
 }
 
 export async function updateTicket(id: string, updates: UpdateTicketInput): Promise<Ticket> {

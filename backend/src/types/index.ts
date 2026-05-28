@@ -32,6 +32,10 @@ export interface Ticket {
   updated_at: string
 }
 
+export interface TicketWithUser extends Ticket {
+  users: { name: string; email: string } | null
+}
+
 export interface Comment {
   id: string
   ticket_id: string

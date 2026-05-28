@@ -84,7 +84,7 @@ export default function TicketDetailPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-gray-900">{ticket.title}</h1>
             <p className="mt-1 text-xs text-gray-400">
-              Creado {new Date(ticket.created_at).toLocaleDateString('es-MX', {
+              {ticket.users?.name || 'Usuario'} · Creado {new Date(ticket.created_at).toLocaleDateString('es-MX', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
