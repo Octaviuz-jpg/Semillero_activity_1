@@ -53,14 +53,12 @@ export default function DashboardPage() {
             >
               Ver tickets
             </Link>
-            {user.role !== 'user' && (
-              <Link
-                href="/tickets/new"
-                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Nuevo Ticket
-              </Link>
-            )}
+            <Link
+              href="/tickets/new"
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Nuevo Ticket
+            </Link>
             {user.role === 'admin' && (
               <>
                 <Link href="/admin/users" className="text-sm text-gray-600 hover:text-gray-900">
