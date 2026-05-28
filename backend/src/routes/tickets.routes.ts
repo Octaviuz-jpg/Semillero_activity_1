@@ -30,9 +30,14 @@ const updateSchema = z.object({
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
     const filters: Record<string, string> = {}
+
+    if (req.user!.role === 'user') {
+      filters.user_id = req.user!.userId
+    }
+
     if (req.query.status) filters.status = req.query.status as string
     if (req.query.priority) filters.priority = req.query.priority as string
-    if (req.query.user_id) filters.user_id = req.query.user_id as string
+    if (req.query.user_id && req.user!.role !== 'user') filters.user_id = req.query.user_id as string
     if (req.query.assigned_to) filters.assigned_to = req.query.assigned_to as string
 
     const tickets = await getTickets(
