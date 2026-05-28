@@ -28,6 +28,7 @@ export interface Comment {
   content: string
   is_ai_suggested: boolean
   created_at: string
+  user?: { name: string; role: Role } | null
 }
 
 export interface Category {

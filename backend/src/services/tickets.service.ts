@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { Ticket, TicketWithUser, TicketStatus, TicketPriority } from '../types'
+import { Ticket, TicketWithUser, TicketStatus, TicketPriority, User } from '../types'
 
 type CreateTicketInput = {
   title: string
@@ -15,6 +15,21 @@ type UpdateTicketInput = {
   priority?: TicketPriority
   assigned_to?: string | null
   category_id?: string | null
+}
+
+async function attachUserInfo(tickets: Ticket[]): Promise<TicketWithUser[]> {
+  const userIds = [...new Set(tickets.map((t) => t.user_id))]
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, name, email')
+    .in('id', userIds)
+
+  const userMap = new Map((users || []).map((u) => [u.id, { name: u.name, email: u.email }]))
+
+  return tickets.map((ticket) => ({
+    ...ticket,
+    users: userMap.get(ticket.user_id) ?? { name: 'Desconocido', email: '' },
+  }))
 }
 
 export async function createTicket(data: CreateTicketInput): Promise<Ticket> {
@@ -33,15 +48,13 @@ export async function createTicket(data: CreateTicketInput): Promise<Ticket> {
   return ticket as Ticket
 }
 
-const TICKET_SELECT = '*, users:users(name, email)'
-
 export async function getTickets(filters?: {
   status?: TicketStatus
   priority?: TicketPriority
   user_id?: string
   assigned_to?: string
 }): Promise<TicketWithUser[]> {
-  let query = supabase.from('tickets').select(TICKET_SELECT)
+  let query = supabase.from('tickets').select('*')
 
   if (filters?.status) query = query.eq('status', filters.status)
   if (filters?.priority) query = query.eq('priority', filters.priority)
@@ -52,18 +65,28 @@ export async function getTickets(filters?: {
 
   const { data, error } = await query
   if (error) throw new Error(error.message)
-  return (data as TicketWithUser[]) || []
+  const tickets = (data as Ticket[]) || []
+
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  tickets.sort((a, b) => {
+    const p = (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
+    if (p !== 0) return p
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+
+  return attachUserInfo(tickets)
 }
 
 export async function getTicketById(id: string): Promise<TicketWithUser> {
-  const { data, error } = await supabase
+  const { data: ticket, error } = await supabase
     .from('tickets')
-    .select(TICKET_SELECT)
+    .select('*')
     .eq('id', id)
     .single()
 
-  if (error || !data) throw new Error('Ticket no encontrado')
-  return data as TicketWithUser
+  if (error || !ticket) throw new Error('Ticket no encontrado')
+  const [enriched] = await attachUserInfo([ticket as Ticket])
+  return enriched
 }
 
 export async function updateTicket(id: string, updates: UpdateTicketInput): Promise<Ticket> {

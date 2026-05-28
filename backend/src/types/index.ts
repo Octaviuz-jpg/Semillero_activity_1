@@ -45,6 +45,10 @@ export interface Comment {
   created_at: string
 }
 
+export interface CommentWithUser extends Comment {
+  user: { name: string; role: Role } | null
+}
+
 export interface Category {
   id: string
   name: string

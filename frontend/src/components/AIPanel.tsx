@@ -15,6 +15,7 @@ interface AiOutput {
 interface AIPanelProps {
   ticket: Ticket
   token: string
+  onSelectSuggestion?: (text: string) => void
 }
 
 type AiTask = 'classify' | 'summarize' | 'suggest-reply' | 'risk-analysis' | 'next-action'
@@ -29,7 +30,7 @@ const taskLabels: Record<AiTask, string> = {
 
 const criticalActions = ['escalate', 'close']
 
-export default function AIPanel({ ticket, token }: AIPanelProps) {
+export default function AIPanel({ ticket, token, onSelectSuggestion }: AIPanelProps) {
   const [loading, setLoading] = useState<AiTask | null>(null)
   const [result, setResult] = useState<AiOutput | null>(null)
   const [error, setError] = useState('')
@@ -135,8 +136,14 @@ export default function AIPanel({ ticket, token }: AIPanelProps) {
               <p className="text-xs font-medium text-gray-500 mb-1">Sugerencias</p>
               <ul className="space-y-1">
                 {result.suggestions.map((s, i) => (
-                  <li key={i} className="text-sm text-gray-700 bg-gray-50 rounded p-2">
-                    {s}
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectSuggestion?.(s)}
+                      className="w-full text-left text-sm text-gray-700 bg-gray-50 rounded p-2 hover:bg-blue-100 hover:text-blue-800 transition-colors cursor-pointer"
+                    >
+                      {s}
+                    </button>
                   </li>
                 ))}
               </ul>

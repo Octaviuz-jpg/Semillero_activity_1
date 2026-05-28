@@ -22,7 +22,7 @@ export default function DashboardPage() {
     if (!token) return
     api.get<Ticket[]>('/tickets', token!)
       .then(setTickets)
-      .catch(() => {})
+      .catch((err) => console.error('Error fetching tickets:', err))
   }, [token])
 
   if (isLoading || !user) {
