@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { api } from '@/lib/api'
+import Navbar from '@/components/Navbar'
 import { StatusBadge, PriorityBadge } from '@/components/ui/Badge'
 import AIPanel from '@/components/AIPanel'
 import type { Ticket, Comment, TicketStatus } from '@/types'
+import { ArrowLeft, MessageSquare, Send, Circle, Clock, CheckCircle2 } from 'lucide-react'
 
 const roleStyles: Record<string, { align: string; bg: string; border: string; dot: string }> = {
   user: {
@@ -34,6 +36,12 @@ const roleLabels: Record<string, string> = {
   agent: 'Agente',
   admin: 'Admin',
 }
+
+const statusButtons: { status: TicketStatus; label: string; icon: typeof Circle; color: string }[] = [
+  { status: 'open', label: 'Abrir', icon: Circle, color: 'amber' },
+  { status: 'in_progress', label: 'En Progreso', icon: Clock, color: 'blue' },
+  { status: 'resolved', label: 'Resolver', icon: CheckCircle2, color: 'emerald' },
+]
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -93,8 +101,14 @@ export default function TicketDetailPage() {
 
   if (!ticket) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Cargando...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center py-32">
+          <div className="flex items-center gap-3 text-gray-400">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+            <span className="text-sm">Cargando ticket...</span>
+          </div>
+        </div>
       </div>
     )
   }
@@ -102,168 +116,192 @@ export default function TicketDetailPage() {
   const canChangeStatus = user?.role === 'admin' || user?.role === 'agent'
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <button
-        onClick={() => router.push('/tickets')}
-        className="mb-4 text-sm text-gray-500 hover:text-gray-700"
-      >
-        &larr; Volver a tickets
-      </button>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <button
+          onClick={() => router.push('/tickets')}
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver a tickets
+        </button>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-gray-900">{ticket.title}</h1>
-            <p className="mt-1 text-xs text-gray-400">
-              {ticket.users?.name || 'Usuario'} · Creado {new Date(ticket.created_at).toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
-          </div>
-          <div className="ml-4 flex items-center gap-2">
-            <StatusBadge status={ticket.status} />
-            <PriorityBadge priority={ticket.priority} />
-          </div>
-        </div>
-
-        <p className="whitespace-pre-wrap text-sm text-gray-700">{ticket.description}</p>
-
-        {canChangeStatus && (
-          <div className="mt-6 border-t pt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cambiar estado
-            </label>
-            <div className="flex gap-2">
-              {(['open', 'in_progress', 'resolved'] as TicketStatus[]).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => handleStatusChange(status)}
-                  disabled={ticket.status === status}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${
-                    ticket.status === status
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {status === 'open' ? 'Abrir' : status === 'in_progress' ? 'En Progreso' : 'Resolver'}
-                </button>
-              ))}
+        <div className="animate-fade-in rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <StatusBadge status={ticket.status} />
+                <PriorityBadge priority={ticket.priority} />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
+              <p className="mt-2 text-sm text-gray-500">
+                {ticket.users?.name || 'Usuario'} · Creado{' '}
+                {new Date(ticket.created_at).toLocaleDateString('es-MX', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
             </div>
           </div>
-        )}
-      </div>
 
-      {canChangeStatus && token && (
-        <AIPanel
-          ticket={ticket}
-          token={token}
-          onSelectSuggestion={(text) => setNewComment(text)}
-        />
-      )}
-
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-6">
-          Comentarios ({comments.length})
-        </h2>
-
-        {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-        )}
-
-        <div className="space-y-5 mb-8">
-          {comments.map((comment) => {
-            const role = comment.user?.role || 'user'
-            const style = roleStyles[role] || roleStyles.user
-            const name = comment.user?.name || 'Usuario'
-            const roleLabel = roleLabels[role] || 'Usuario'
-            const isAi = comment.is_ai_suggested
-
-            return (
-              <div key={comment.id} className={`flex ${style.align}`}>
-                <div className={`flex gap-3 max-w-[80%] ${role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
-                  <div
-                    className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                      role === 'admin' ? 'bg-purple-500' : role === 'agent' ? 'bg-blue-500' : 'bg-gray-500'
-                    }`}
-                    title={name}
-                  >
-                    {getInitials(name)}
-                  </div>
-
-                  <div className={`flex flex-col ${role === 'user' ? 'items-start' : 'items-end'}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-gray-700">{name}</span>
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        role === 'admin'
-                          ? 'bg-purple-100 text-purple-700'
-                          : role === 'agent'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                        {roleLabel}
-                      </span>
-                    </div>
-
-                    <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                      isAi ? 'bg-amber-50 border border-amber-200 text-amber-900' : `${style.bg} border ${style.border} text-gray-800`
-                    }`}>
-                      {isAi && (
-                        <span className="block text-[10px] font-medium text-amber-600 mb-1">
-                          Sugerido por IA
-                        </span>
-                      )}
-                      <p className="whitespace-pre-wrap">{comment.content}</p>
-                    </div>
-
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      {new Date(comment.created_at).toLocaleDateString('es-MX', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-
-          {comments.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-8">
-              Sin comentarios aún. Sé el primero en responder.
+          <div className="mt-6 rounded-xl bg-gray-50 p-5">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+              {ticket.description}
             </p>
+          </div>
+
+          {canChangeStatus && (
+            <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-6">
+              <span className="text-sm font-medium text-gray-700 mr-1">Cambiar estado:</span>
+              {statusButtons.map((btn) => {
+                const Icon = btn.icon
+                const isActive = ticket.status === btn.status
+                return (
+                  <button
+                    key={btn.status}
+                    onClick={() => handleStatusChange(btn.status)}
+                    disabled={isActive}
+                    className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all active:scale-95 ${
+                      isActive
+                        ? `bg-${btn.color}-50 text-${btn.color}-400 cursor-not-allowed ring-1 ring-${btn.color}-200`
+                        : `bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-${btn.color}-50 hover:text-${btn.color}-700 hover:ring-${btn.color}-200`
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${isActive ? '' : ''}`} />
+                    {btn.label}
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
 
-        <form onSubmit={handleAddComment} className="border-t pt-6">
-          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-            Agregar comentario
-          </label>
-          <textarea
-            id="comment"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            rows={3}
-            className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-            placeholder="Escribe tu respuesta aquí..."
-          />
-          <div className="flex justify-end mt-3">
-            <button
-              type="submit"
-              disabled={submitting || !newComment.trim()}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              {submitting ? 'Enviando...' : 'Enviar comentario'}
-            </button>
+        {canChangeStatus && token && (
+          <div className="mt-6 animate-slide-up">
+            <AIPanel
+              ticket={ticket}
+              token={token}
+              onSelectSuggestion={(text) => setNewComment(text)}
+            />
           </div>
-        </form>
+        )}
+
+        <div className="mt-8 animate-fade-in">
+          <div className="mb-6 flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-gray-500" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Comentarios ({comments.length})
+            </h2>
+          </div>
+
+          {error && (
+            <div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-600 ring-1 ring-red-100">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-5 mb-8">
+            {comments.map((comment) => {
+              const role = comment.user?.role || 'user'
+              const style = roleStyles[role] || roleStyles.user
+              const name = comment.user?.name || 'Usuario'
+              const roleLabel = roleLabels[role] || 'Usuario'
+              const isAi = comment.is_ai_suggested
+
+              return (
+                <div key={comment.id} className={`flex ${style.align} animate-fade-in`}>
+                  <div className={`flex gap-3 max-w-[85%] ${role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
+                    <div
+                      className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${
+                        role === 'admin' ? 'bg-gradient-to-br from-purple-500 to-purple-600' : role === 'agent' ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-gray-500 to-gray-600'
+                      }`}
+                      title={name}
+                    >
+                      {getInitials(name)}
+                    </div>
+
+                    <div className={`flex flex-col ${role === 'user' ? 'items-start' : 'items-end'}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-semibold text-gray-800">{name}</span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          role === 'admin'
+                            ? 'bg-purple-100 text-purple-700'
+                            : role === 'agent'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                          {roleLabel}
+                        </span>
+                      </div>
+
+                      <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                        isAi ? 'bg-amber-50 border border-amber-200 text-amber-900' : `${style.bg} border ${style.border} text-gray-800`
+                      }`}>
+                        {isAi && (
+                          <span className="block text-[10px] font-semibold text-amber-600 mb-1">
+                            Sugerido por IA
+                          </span>
+                        )}
+                        <p className="whitespace-pre-wrap">{comment.content}</p>
+                      </div>
+
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        {new Date(comment.created_at).toLocaleDateString('es-MX', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+
+            {comments.length === 0 && (
+              <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                <MessageSquare className="mx-auto h-8 w-8 text-gray-300" />
+                <p className="mt-3 text-sm font-medium text-gray-500">
+                  Sin comentarios aún
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Sé el primero en responder.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleAddComment} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <label htmlFor="comment" className="block text-sm font-semibold text-gray-700 mb-3">
+              Agregar comentario
+            </label>
+            <textarea
+              id="comment"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              rows={3}
+              className="block w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm transition-all placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+              placeholder="Escribe tu respuesta aquí..."
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="submit"
+                disabled={submitting || !newComment.trim()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="h-4 w-4" />
+                {submitting ? 'Enviando...' : 'Enviar comentario'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )
