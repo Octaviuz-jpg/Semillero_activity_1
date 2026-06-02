@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.gitignore
+frontend
+docs
+n8n-workflows
+README.md
+docker-compose.yml
+railway.toml
+vercel.json
