@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { Ticket, TicketWithUser, TicketStatus, TicketPriority, User } from '../types'
+import { notifyTicketCreated, notifyHighPriority } from './n8n.service'
 
 type CreateTicketInput = {
   title: string
@@ -45,7 +46,11 @@ export async function createTicket(data: CreateTicketInput): Promise<Ticket> {
     .single()
 
   if (error || !ticket) throw new Error(error?.message || 'Error al crear ticket')
-  return ticket as Ticket
+
+  const created = ticket as Ticket
+  notifyTicketCreated(created.id, created.title, created.user_id)
+
+  return created
 }
 
 export async function getTickets(filters?: {
@@ -98,7 +103,14 @@ export async function updateTicket(id: string, updates: UpdateTicketInput): Prom
     .single()
 
   if (error || !data) throw new Error(error?.message || 'Error al actualizar ticket')
-  return data as Ticket
+
+  const updated = data as Ticket
+
+  if (updated.priority === 'high' || updated.priority === 'critical') {
+    notifyHighPriority(updated.id, updated.title, updated.priority, updated.user_id)
+  }
+
+  return updated
 }
 
 export async function deleteTicket(id: string): Promise<void> {
